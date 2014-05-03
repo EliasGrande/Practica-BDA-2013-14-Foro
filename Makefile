@@ -13,8 +13,6 @@ creasql    = $(srcdir)/crea.sql
 buildmemoria = $(docdir)/memoria.pdf
 buildforo    = $(builddir)/foro
 
-compila := $(shell readlink -m "$(srcdir)/compila.sh")
-
 CC = ./make-util/make-pc.sh
 CT = ./make-util/make-tex.sh
 RS = ./make-util/run-sql.sh
