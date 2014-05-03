@@ -1,0 +1,12 @@
+*~
+thumbs.db
+.DS_Store
+.project
+.settings
+doc/*.aux
+doc/*.dvi
+doc/*.log
+doc/*.out
+doc/*.pdf
+doc/*.synctex.gz
+doc/*.toc

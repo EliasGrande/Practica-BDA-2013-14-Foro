@@ -1,0 +1,95 @@
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <sqlca.h>
+
+int menu_principal();
+void entrar();
+void registro();
+void login_bd();
+void logout_bd();
+
+/* GESTION ERRORES SQL */
+
+EXEC SQL WHENEVER SQLERROR DO gestion_error_sql();
+
+void gestion_error_sql()
+{
+	EXEC SQL WHENEVER SQLERROR CONTINUE;
+	printf("Chourizo\n");
+	EXEC SQL ROLLBACK WORK RELEASE;
+	exit(1);
+}
+
+/* MAIN */
+
+int main()
+{
+	int op;
+
+	login_bd();
+	while ( (op=menu_principal()) != 0){
+		switch(op){
+			case 1: entrar(); break;
+			case 2: registro(); break;
+		}
+	}
+
+	logout_bd();
+	return 0;
+}
+
+/* MENUS */
+
+int menu_principal()
+{
+	int opcion = -1;
+
+	system("clear");
+	printf("Menú principal\n");
+	printf("==================\n\n");
+	printf("1. Entrar\n");
+	printf("2. Registrarse\n");
+	printf("0. Salir\n");
+
+	while ((opcion < 0) || (opcion > 2)){
+		printf("OP> ");
+		scanf("%d", &opcion);
+	}
+	return opcion;
+}
+
+void entrar()
+{
+	char nick[20];
+	char pass[32];
+
+	system("clear");
+	printf("Nombre de usuario: ");
+	scanf("%s", nick);
+	printf("Contraseña: ");
+	scanf("%s", pass);
+
+	printf("\n\nTouciño:\n[%s][%s]\n", nick, pass);
+}
+
+void registro()
+{
+	printf("Lombo espicial\n");
+}
+
+/* LOGIN / LOGOUT SQL */
+
+void login_bd()
+{
+	EXEC SQL BEGIN DECLARE SECTION;
+		char usuario [40] = "***REMOVED***/***REMOVED***";
+	EXEC SQL END DECLARE SECTION;
+	EXEC SQL CONNECT :usuario;
+}
+
+void logout_bd()
+{
+	EXEC SQL COMMIT RELEASE;
+}
+
