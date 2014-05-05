@@ -59,3 +59,27 @@ VALUES (
 	'S'
 );
 
+INSERT INTO foro (id, fechacreacion, nombre, idusuario)
+VALUES (
+	foro_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Foro bases de datos avanzadas', 1
+);
+
+INSERT INTO foro (id, fechacreacion, nombre, idusuario)
+VALUES (
+	foro_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Foro ferramentas de desarrollo', 1
+);
+
+INSERT INTO foro (id, fechacreacion, nombre, idusuario)
+VALUES (
+	foro_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Foro proyectos de desarrollo software', 1
+);
+
+INSERT INTO foro (id, fechacreacion, nombre, idusuario)
+VALUES (
+	foro_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Foro aseguramiento de la calidad', 1
+);
+
+INSERT INTO foro (id, fechacreacion, nombre, idusuario)
+VALUES (
+	foro_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Foro sistemas de información empresarial', 1
+);
