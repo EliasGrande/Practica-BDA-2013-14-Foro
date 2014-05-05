@@ -53,7 +53,7 @@ INSERT INTO usuario (id, nick, pass, email, fecharegistro, esAdmin)
 VALUES (
 	usuario_seq.NEXTVAL,
 	'admin',
-	'21232f297a57a5a743894a0e4a801fc3', -- md5('admin')
+	'admin',
 	'admin@example.com',
 	(SELECT sysdate FROM dual),
 	'S'

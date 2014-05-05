@@ -19,13 +19,13 @@ name=`basename "$input" | sed -e "s/\.pc$//"`
 
 cd "$dir" || error
 "$compila" "$name"
-exitcode=$?
+#exitcode=$?
 
-rm -f "$name.o" "$name.c"
-test $exitcode -eq 0 || error
+rm -f "$name.o" "$name.c" "$name.lis"
+#test $exitcode -eq 0 || error
 
 cd -
 i="`readlink -f "$dir/$name"`" || error
-o="`readlink -f "$output"`" || error
+o="`readlink -m "$output"`" || error
 test "$i" = "$o" || mv -f "$i" "$o"
 

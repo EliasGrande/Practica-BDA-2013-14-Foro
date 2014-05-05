@@ -33,7 +33,7 @@ all: $(buildforo)
 $(builddir):
 	mkdir -p $(builddir)
 
-$(buildforo):
+$(buildforo): $(builddir)
 	$(CC) $(srcforo) $(buildforo)
 
 $(buildmemoria):

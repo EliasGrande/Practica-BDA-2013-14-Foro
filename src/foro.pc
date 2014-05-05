@@ -2,24 +2,18 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sqlca.h>
+#include <errno.h>
 
 int menu_principal();
 void entrar();
 void registro();
+void listar_foros();
 void login_bd();
 void logout_bd();
+void gestion_error_sql();
 
-/* GESTION ERRORES SQL */
-
-EXEC SQL WHENEVER SQLERROR DO gestion_error_sql();
-
-void gestion_error_sql()
-{
-	EXEC SQL WHENEVER SQLERROR CONTINUE;
-	printf("Chourizo\n");
-	EXEC SQL ROLLBACK WORK RELEASE;
-	exit(1);
-}
+int id_usuario;
+char nick_usuario [20];
 
 /* MAIN */
 
@@ -45,7 +39,7 @@ int menu_principal()
 {
 	int opcion = -1;
 
-	system("clear");
+	//system("clear");
 	printf("Menú principal\n");
 	printf("==================\n\n");
 	printf("1. Entrar\n");
@@ -61,21 +55,51 @@ int menu_principal()
 
 void entrar()
 {
-	char nick[20];
-	char pass[32];
+	char pass_usuario[32];
 
-	system("clear");
+	//system("clear");
 	printf("Nombre de usuario: ");
-	scanf("%s", nick);
+	scanf("%s", nick_usuario);
 	printf("Contraseña: ");
-	scanf("%s", pass);
+	scanf("%s", pass_usuario);
 
-	printf("\n\nTouciño:\n[%s][%s]\n", nick, pass);
+	id_usuario = -1;
+	EXEC SQL SELECT id
+		INTO :id_usuario
+		FROM usuario
+		WHERE nick=:nick_usuario AND pass=:pass_usuario;
+
+	if (id_usuario < 0) {
+		printf("\nUsuario y/o contraseña no válidos.\n\n");
+	}
+	else {
+		listar_foros();
+	}
 }
 
 void registro()
 {
-	printf("Lombo espicial\n");
+	printf("TODO: Registro\n");
+}
+
+void listar_foros()
+{
+	EXEC SQL BEGIN DECLARE SECTION;
+		int id;
+		VARCHAR fechacreacion[11];
+		VARCHAR nombre[45];
+	EXEC SQL END DECLARE SECTION;
+
+	EXEC SQL DECLARE foros CURSOR FOR
+		SELECT id, fechacreacion, nombre
+		FROM foro;
+	EXEC SQL OPEN foros;
+	EXEC SQL WHENEVER NOT FOUND DO break;
+
+	while(1){
+		EXEC SQL FETCH foros INTO :id, :fechacreacion, :nombre;
+		printf("#%5d - %45s - %11s", id, fechacreacion, nombre);
+	}
 }
 
 /* LOGIN / LOGOUT SQL */
@@ -83,13 +107,25 @@ void registro()
 void login_bd()
 {
 	EXEC SQL BEGIN DECLARE SECTION;
-		char usuario [40] = "***REMOVED***/***REMOVED***";
+		char bd_user [40] = "\"***REMOVED***\"";
+		char bd_pass [40] = "***REMOVED***";
 	EXEC SQL END DECLARE SECTION;
-	EXEC SQL CONNECT :usuario;
+	EXEC SQL WHENEVER SQLERROR DO gestion_error_sql();
+	EXEC SQL CONNECT :bd_user IDENTIFIED BY :bd_pass;
 }
 
 void logout_bd()
 {
 	EXEC SQL COMMIT RELEASE;
+}
+
+/* GESTION ERRORES SQL */
+
+void gestion_error_sql()
+{
+	EXEC SQL WHENEVER SQLERROR CONTINUE;
+	printf("Falló al autenticación  la base de datos.\n");
+	EXEC SQL ROLLBACK WORK RELEASE;
+	exit(1);
 }
 

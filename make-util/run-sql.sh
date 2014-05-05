@@ -20,7 +20,7 @@ if test -z "$login"; then
 	printf "Contraseña: "
 	read pass
 	stty echo
-	login="$user/$pass"
+	login="\"$user\"/$pass"
 fi
 
 printf "\n\n"
