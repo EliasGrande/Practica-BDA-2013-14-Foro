@@ -83,3 +83,57 @@ INSERT INTO foro (id, fechacreacion, nombre, idusuario)
 VALUES (
 	foro_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Foro sistemas de información empresarial', 1
 );
+
+-- ------------------------
+
+INSERT INTO hilo (id, fechacreacion, titulo, idusuario, idforo)
+VALUES (
+	hilo_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Hilo primer examen de practicas', 1, 1
+);
+
+INSERT INTO hilo (id, fechacreacion, titulo, idusuario, idforo)
+VALUES (
+	hilo_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Hilo segundo examen de practicas', 1, 1
+);
+
+INSERT INTO hilo (id, fechacreacion, titulo, idusuario, idforo)
+VALUES (
+	hilo_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Hilo examen final', 1, 1
+);
+
+INSERT INTO hilo (id, fechacreacion, titulo, idusuario, idforo)
+VALUES (
+	hilo_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Hilo primera iteracion', 1, 2
+);
+
+INSERT INTO hilo (id, fechacreacion, titulo, idusuario, idforo)
+VALUES (
+	hilo_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Hilo trabajo final', 1, 3
+);
+
+INSERT INTO hilo (id, fechacreacion, titulo, idusuario, idforo)
+VALUES (
+	hilo_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Hilo primera iteracion', 1, 2
+);
+
+INSERT INTO hilo (id, fechacreacion, titulo, idusuario, idforo)
+VALUES (
+	hilo_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Hilo dudas frecuentes', 1, 2
+);
+
+INSERT INTO hilo (id, fechacreacion, titulo, idusuario, idforo)
+VALUES (
+	hilo_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Hilo entrega inicial', 1, 4
+);
+
+INSERT INTO hilo (id, fechacreacion, titulo, idusuario, idforo)
+VALUES (
+	hilo_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Hilo novedades', 1, 2
+);
+
+INSERT INTO hilo (id, fechacreacion, titulo, idusuario, idforo)
+VALUES (
+	hilo_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Hilo trabajo tutelado', 1, 5
+)
+
+
