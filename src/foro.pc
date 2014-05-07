@@ -21,7 +21,7 @@ void listar_entradas(int id_hilo);
 void ver_entrada(int id_entrada);
 void borrar_entrada(int id_entrada);
 void editar_entrada(int id_entrada);
-void crear_entrada();
+void crear_entrada(int id_hilo);
 void do_nothing(){}
 
 int id_usuario;
@@ -268,7 +268,7 @@ void crear_hilo()
 // --- LISTAR ENTRADAS ---
 // -----------------------
 
-int menu_listar_entradas()
+int menu_listar_entradas(int id_hilo)
 {
  	int opcion = -1;
 	int id_entrada;
@@ -290,7 +290,7 @@ int menu_listar_entradas()
 				scanf("%d", &id_entrada);			 	
 				ver_entrada(id_entrada); 
 				break;
-			case 2: crear_entrada(); break;
+			case 2: crear_entrada(id_hilo); break;
 		}
 	}
 	return opcion;
@@ -351,7 +351,7 @@ void listar_entradas(int id_hilo)
 			printf(" %s\n", texto_entrada);
 		}
 	}
-	while (menu_listar_entradas() > 0);
+	while (menu_listar_entradas(id_hilo) > 0);
 }
 
 // -------------------
@@ -394,7 +394,9 @@ int menu_ver_entrada(int id_entrada)
 		if (es_autor_o_admin) {
 			switch (opcion) {
 				case 2:
-					borrar_entrada(id_entrada); break;
+					borrar_entrada(id_entrada);
+					opcion = 0;
+					break;
 				case 3:
 					editar_entrada(id_entrada); break;
 			}
@@ -440,25 +442,49 @@ void ver_entrada(int id_entrada)
 
 void borrar_entrada(int id_entrada)
 {
-	printf("\n--- TODO: void borrar_entrada ---\n");
+	EXEC SQL WHENEVER NOT FOUND DO do_nothing();
+	EXEC SQL DELETE FROM entrada
+		WHERE id=:id_entrada;
+	
+	printf("\nEntrada borrada con éxito.\n");
+	esperar_tecla();
 }
 
-// ----------------------
-// --- EDITAR ENTRADA ---
-// ----------------------
+// ----------------------------
+// --- CREAR/EDITAR ENTRADA ---
+// ----------------------------
+
+void pedir_datos_entrada(char *titulo, char *texto)
+{
+	printf("\n");
+	printf("Titulo: ");
+	scanf("%s",titulo);
+	printf("Texto: ");
+	scanf("%s",texto);
+}
 
 void editar_entrada(int id_entrada)
 {
-	printf("\n--- TODO: void editar_entrada ---\n");
+	char titulo[45];
+	char texto[1000];
+	pedir_datos_entrada(titulo, texto);
+	
+	printf("====> %s\n====> %s\n", titulo, texto);
+	
+	EXEC SQL WHENEVER NOT FOUND DO do_nothing();
+	EXEC SQL UPDATE entrada
+		SET titulo = :titulo, texto = :texto
+		WHERE id=:id_entrada;
+	
+	printf("\nEntrada editada con éxito.\n");
+	esperar_tecla();
 }
 
-// ---------------------
-// --- CREAR ENTRADA ---
-// ---------------------
-
-void crear_entrada()
+void crear_entrada(int id_hilo)
 {
-	printf("\n--- TODO: void crear_entrada ---\n");
+	char titulo[45];
+	char texto[1000];
+	pedir_datos_entrada(titulo, texto);
 }
 
 // ------------------------
