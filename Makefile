@@ -26,7 +26,7 @@ CLEAN_COMMON_TRASH = find ./ -type f \
 
 PDF_VIEWER = evince
 
-.PHONY: all clean exec sql doc commit push
+.PHONY: all clean exec sql doc commit push pull
 
 all: $(buildforo)
 
@@ -59,4 +59,7 @@ commit:
 
 push:
 	export GIT_SSL_NO_VERIFY=true && git push
+
+pull:
+	export GIT_SSL_NO_VERIFY=true && git pull
 
