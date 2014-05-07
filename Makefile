@@ -26,7 +26,7 @@ CLEAN_COMMON_TRASH = find ./ -type f \
 
 PDF_VIEWER = evince
 
-.PHONY: all clean exec sql doc
+.PHONY: all clean exec sql doc commit push
 
 all: $(buildforo)
 
@@ -53,4 +53,11 @@ clean:
 
 sql:
 	$(RS) $(creasql) "$(ORA_LOGIN)"
+
+commit:
+	git commit -a
+
+push:
+	export GIT_SSL_NO_VERIFY=true
+	git push
 
