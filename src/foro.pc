@@ -4,6 +4,9 @@
 #include <sqlca.h>
 #include <errno.h>
 
+#define SI_ESADMIN 'S'
+#define NO_ESADMIN 'N'
+
 int menu_principal();
 void entrar();
 void registro();
@@ -15,10 +18,23 @@ void crear_foro();
 void listar_hilos(int id_foro);
 void crear_hilo();
 void listar_entradas(int id_hilo);
+void ver_entrada(int id_entrada);
+void borrar_entrada(int id_entrada);
+void editar_entrada(int id_entrada);
+void crear_entrada();
 void do_nothing(){}
 
 int id_usuario;
+char esadmin_usuario;
 char nick_usuario [20];
+
+void esperar_tecla()
+{
+	printf("Pulsa cualquier tecla para continuar.\n");
+	int fd;
+	void *buf;
+	read(fd, buf, 1);
+}
 
 // ------------
 // --- MAIN ---
@@ -75,8 +91,8 @@ void entrar()
 	scanf("%s", pass_usuario);
 
 	id_usuario = -1;
-	EXEC SQL SELECT id
-		INTO :id_usuario
+	EXEC SQL SELECT id, esadmin
+		INTO :id_usuario, :esadmin_usuario
 		FROM usuario
 		WHERE nick=:nick_usuario AND pass=:pass_usuario;
 
@@ -195,7 +211,7 @@ int menu_listar_hilos()
 
 void listar_hilos(int id_foro) 
 {
-	int id_foro_obtenida = -1;
+	int id_foro_obtenido = -1;
 	char fechacreacion_foro[11];
 	char nombre_foro[45];
 		
@@ -205,12 +221,13 @@ void listar_hilos(int id_foro)
 	
 	EXEC SQL WHENEVER NOT FOUND DO do_nothing();
 	EXEC SQL SELECT id, fechacreacion, nombre
-		INTO :id_foro_obtenida, :fechacreacion_foro, :nombre_foro
+		INTO :id_foro_obtenido, :fechacreacion_foro, :nombre_foro
 		FROM foro
 		WHERE id=:id_foro;
 	
-	if (id_foro_obtenida < 0) {
+	if (id_foro_obtenido < 0) {
 		printf("\nNúmero de foro no válido.\n");
+		esperar_tecla();
 		return;
 	}
 	
@@ -219,7 +236,8 @@ void listar_hilos(int id_foro)
 		printf("\n");
 		printf(" Foro %5d | %45s | creado el %11s\n",
 				id_foro, nombre_foro, fechacreacion_foro);
-		printf(" ================================================================================");
+		printf(" ========================================");
+		printf("========================================\n");
 	
 		EXEC SQL DECLARE hilos CURSOR FOR
 			SELECT id, fechacreacion, titulo
@@ -228,7 +246,6 @@ void listar_hilos(int id_foro)
 		EXEC SQL OPEN hilos;
 		EXEC SQL WHENEVER NOT FOUND DO break;
 	
-		printf("\n");
 		while(1){
 			EXEC SQL FETCH hilos INTO :id_hilo, :fechacreacion_hilo, :titulo_hilo;
 			printf(" Hilo %5d | %45s | creado el %11s\n",
@@ -251,23 +268,197 @@ void crear_hilo()
 // --- LISTAR ENTRADAS ---
 // -----------------------
 
+int menu_listar_entradas()
+{
+ 	int opcion = -1;
+	int id_entrada;
+	
+	while ((opcion < 0) || (opcion > 3)) {
+
+		printf("\n");
+		printf("1. Ver entrada\n");
+		printf("2. Responder al hilo\n");
+		printf("3. Refrescar vista\n");
+		printf("0. Volver atrás\n");
+		printf("\n");
+		printf("Opción: ");
+		scanf("%d", &opcion);
+
+		switch (opcion) {
+			case 1:
+			 	printf ("Numero de la entrada: ");
+				scanf("%d", &id_entrada);			 	
+				ver_entrada(id_entrada); 
+				break;
+			case 2: crear_entrada(); break;
+		}
+	}
+	return opcion;
+}
+
 void listar_entradas(int id_hilo)
 {
-	int id_hilo_obtenida = -1;
+	int id_hilo_obtenido = -1;
 	char fechacreacion_hilo[11];
 	char titulo_hilo[45];
+		
+	int id_entrada;
+	char fechacreacion_entrada[11];
+	char titulo_entrada[45];
+	char texto_entrada[1000];
+	char nick_usuario_entrada[20];
 	
 	EXEC SQL WHENEVER NOT FOUND DO do_nothing();
-	EXEC SQL SELECT id, fechacreacion, titulo
-		INTO :id_hilo_obtenida, :fechacreacion_hilo, :titulo_hilo
-		FROM hilo
-		WHERE id=:id_hilo;
+	EXEC SQL SELECT hilo.id, hilo.fechacreacion, hilo.titulo, usuario.nick
+		INTO :id_hilo_obtenido, :fechacreacion_hilo, :titulo_hilo, 
+		     :nick_usuario_entrada
+		FROM hilo JOIN usuario
+		ON hilo.idusuario = usuario.id
+		WHERE hilo.id = :id_hilo;
 	
-	if (id_hilo_obtenida < 0) {
+	if (id_hilo_obtenido < 0) {
 		printf("\nNúmero de hilo no válido.\n");
-		printf("Pulsa cualquier tecla para volver al foro.\n");
-		getchar();
+		esperar_tecla();
+		return;
 	}
+	
+	do
+	{
+		printf("\n");
+		printf(" Hilo %5d | %45s | creado el %11s\n",
+				id_hilo, titulo_hilo, fechacreacion_hilo);
+		printf(" ========================================");
+		printf("========================================\n\n");
+	
+		EXEC SQL DECLARE entradas CURSOR FOR
+			SELECT id, fechacreacion, titulo, texto
+			FROM entrada
+			WHERE idhilo=:id_hilo;
+		EXEC SQL OPEN entradas;
+		EXEC SQL WHENEVER NOT FOUND DO break;
+	
+		while(1){
+			EXEC SQL FETCH entradas
+			INTO :id_entrada, :fechacreacion_entrada,
+			     :titulo_entrada, :texto_entrada;
+			printf(" ----------------------------------------");
+			printf("----------------------------------------\n");
+			printf(" Post %5d | %45s | creado el %11s\n",
+					id_entrada, titulo_entrada, fechacreacion_entrada);
+			printf(" Autor %s\n", nick_usuario_entrada);
+			printf(" ----------------------------------------");
+			printf("----------------------------------------\n");
+			printf(" %s\n", texto_entrada);
+		}
+	}
+	while (menu_listar_entradas() > 0);
+}
+
+// -------------------
+// --- VER ENTRADA ---
+// -------------------
+
+int menu_ver_entrada(int id_entrada)
+{
+ 	int opcion = -1;
+	int id_entrada_obtenido = -1;
+	int es_autor_o_admin = 0;
+	
+	if (esadmin_usuario == SI_ESADMIN) {
+		es_autor_o_admin = 1;
+	}
+	else {
+		EXEC SQL WHENEVER NOT FOUND DO do_nothing();
+		EXEC SQL SELECT id
+			INTO :id_entrada_obtenido
+			FROM entrada
+			WHERE id=:id_entrada AND idusuario=:id_usuario;
+		if (id_entrada_obtenido>0) es_autor_o_admin = 1;
+	}
+	
+	int num_opciones = (es_autor_o_admin) ? 3 : 1;
+	
+	while ((opcion < 0) || (opcion > num_opciones)) {
+
+		printf("\n");
+		printf("1. Refrescar vista\n");
+		if (es_autor_o_admin) {
+			printf("2. Borrar entrada\n");
+			printf("3. Editar entrada\n");
+		}
+		printf("0. Volver atrás\n");
+		printf("\n");
+		printf("Opción: ");
+		scanf("%d", &opcion);
+
+		if (es_autor_o_admin) {
+			switch (opcion) {
+				case 2:
+					borrar_entrada(id_entrada); break;
+				case 3:
+					editar_entrada(id_entrada); break;
+			}
+		}
+	}
+	return opcion;
+}
+
+void ver_entrada(int id_entrada)
+{
+	int id_entrada_obtenido = -1;
+	char fechacreacion_entrada[11];
+	char titulo_entrada[45];
+	char texto_entrada[1000];
+	
+	EXEC SQL WHENEVER NOT FOUND DO do_nothing();
+	EXEC SQL SELECT id, fechacreacion, titulo, texto
+		INTO :id_entrada_obtenido, :fechacreacion_entrada, :titulo_entrada,
+		     :texto_entrada
+		FROM entrada
+		WHERE id=:id_entrada;
+	
+	if (id_entrada_obtenido < 0) {
+		printf("\nNúmero de entrada no válido.\n");
+		esperar_tecla();
+		return;
+	}
+	
+	do {
+		printf("\n");
+		printf(" Post %5d | %45s | creado el %11s\n",
+				id_entrada, titulo_entrada, fechacreacion_entrada);
+		printf(" ----------------------------------------");
+		printf("----------------------------------------\n");
+		printf("%s\n", texto_entrada);
+	}
+	while (menu_ver_entrada(id_entrada) > 0);
+}
+
+// ----------------------
+// --- BORRAR ENTRADA ---
+// ----------------------
+
+void borrar_entrada(int id_entrada)
+{
+	printf("\n--- TODO: void borrar_entrada ---\n");
+}
+
+// ----------------------
+// --- EDITAR ENTRADA ---
+// ----------------------
+
+void editar_entrada(int id_entrada)
+{
+	printf("\n--- TODO: void editar_entrada ---\n");
+}
+
+// ---------------------
+// --- CREAR ENTRADA ---
+// ---------------------
+
+void crear_entrada()
+{
+	printf("\n--- TODO: void crear_entrada ---\n");
 }
 
 // ------------------------
