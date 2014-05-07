@@ -12,19 +12,24 @@ void login_bd();
 void logout_bd();
 void gestion_error_sql();
 void crear_foro();
-void listar_hilos();
+void listar_hilos(int id_foro);
+void crear_hilo();
+void listar_entradas(int id_hilo);
+void do_nothing(){}
 
 int id_usuario;
 char nick_usuario [20];
 
-/* MAIN */
+// ------------
+// --- MAIN ---
+// ------------
 
 int main()
 {
 	int op;
 
 	login_bd();
-	while ( (op=menu_principal()) != 0){
+	while ( (op=menu_principal()) != 0) {
 		switch(op){
 			case 1: entrar(); break;
 			case 2: registro(); break;
@@ -35,13 +40,10 @@ int main()
 	return 0;
 }
 
-/* MENUS */
-
 int menu_principal()
 {
 	int opcion = -1;
 
-	//system("clear");
 	printf("\n");
 	printf("  Menú principal\n");
 	printf("==================\n");
@@ -50,7 +52,7 @@ int menu_principal()
 	printf("2. Registrarse\n");
 	printf("0. Salir\n");
 
-	while ((opcion < 0) || (opcion > 2)){
+	while ((opcion < 0) || (opcion > 2)) {
 		printf("\n");
 		printf("Opción: ");
 		scanf("%d", &opcion);
@@ -58,11 +60,14 @@ int menu_principal()
 	return opcion;
 }
 
+// --------------
+// --- ENTRAR ---
+// --------------
+
 void entrar()
 {
 	char pass_usuario[32];
 
-	//system("clear");
 	printf("\n");
 	printf("Nombre de usuario: ");
 	scanf("%s", nick_usuario);
@@ -83,102 +88,191 @@ void entrar()
 	}
 }
 
+// ----------------
+// --- REGISTRO ---
+// ----------------
+
 void registro()
 {
-	printf("\n");
-	printf("TODO: Registro\n");
+	printf("\n--- TODO: void registro ---\n");
+}
+
+// --------------------
+// --- LISTAR FOROS ---
+// --------------------
+
+int menu_listar_foros()
+{
+ 	int opcion = -1;
+ 	int id_foro;
+
+	while ((opcion < 0) || (opcion > 3)) {
+	
+		printf("\n");
+		printf("1. Entrar en foro\n");
+		printf("2. Crear foro\n");
+		printf("3. Refrescar vista\n");
+		printf("0. Volver atrás\n");
+		printf("\n");
+		printf("Opción: ");
+		scanf("%d", &opcion);
+
+		switch (opcion) {
+			case 1:
+			 	printf ("Numero del foro: ");
+				scanf("%d", &id_foro);			 	
+				listar_hilos(id_foro); 
+				break;
+			case 2: crear_foro(); break;
+		}
+	}
+	return opcion;
 }
 
 void listar_foros()
-{
-	while(1)
-	{
-		int id;
-		char fechacreacion[11];
-		char nombre[45];
-
-		EXEC SQL DECLARE foros CURSOR FOR
-			SELECT id, fechacreacion, nombre
-			FROM foro;
-		EXEC SQL OPEN foros;
-		EXEC SQL WHENEVER NOT FOUND DO break;
-
-		printf("\n");
-		while(1){
-			EXEC SQL FETCH foros INTO :id, :fechacreacion, :nombre;
-			printf(" # %5d | %45s | creado el %11s\n", id, nombre, fechacreacion);
-		}
-
-	 	int opcion = -1;
-	 	int id_foro;
-
-		while ((opcion < 0) || (opcion > 2)){
-
-			printf("\n");
-			printf("1. Entrar en foro\n");
-			printf("2. Crear foro\n");
-			printf("0. Logout\n");
-
-			printf("\n");
-			printf("Opción: ");
-			scanf("%d", &opcion);
-
-			switch(opcion){
-				case 1:
-				 	printf ("Numero del foro: ");
-					scanf("%d", &id_foro);			 	
-					listar_hilos(id_foro); 
-					break;
-				case 2: crear_foro(); break;
-			}
-
-		}
-		if (opcion==0) break;
-	}
-}
-
-void do_nothing(){}
-
-void listar_hilos(int id_foro) 
 {
 	int id;
 	char fechacreacion[11];
 	char nombre[45];
 	
-	id = -1;
-	EXEC SQL WHENEVER NOT FOUND DO do_nothing();
-	EXEC SQL SELECT id, fechacreacion, nombre
-		INTO :id, :fechacreacion, :nombre
-		FROM foro
-		WHERE id=:id_foro;
-	
-	if (id < 0) {
-		printf("\nNúmero de foro no válido.\n");
-	}
-	else {
-		printf(" Foro %5d | %45s | creado el %11s\n", id, nombre, fechacreacion);
-
-		EXEC SQL DECLARE hilos CURSOR FOR
-			SELECT id, fechacreacion, titulo
-			FROM hilo;
-		EXEC SQL OPEN hilos;
+	do {
+		EXEC SQL DECLARE foros CURSOR FOR
+			SELECT id, fechacreacion, nombre
+			FROM foro;
+		EXEC SQL OPEN foros;
 		EXEC SQL WHENEVER NOT FOUND DO break;
-		
+	
 		printf("\n");
-		while(1){
-			EXEC SQL FETCH hilos INTO :id, :fechacreacion, :nombre;
-			printf(" # %5d | %45s | creado el %11s\n", id, nombre, fechacreacion);
+		while(1) {
+			EXEC SQL FETCH foros INTO :id, :fechacreacion, :nombre;
+			printf(" Foro %5d | %45s | creado el %11s\n",
+					id, nombre, fechacreacion);
 		}
-		
-		scanf("%s");
 	}
+	while (menu_listar_foros() > 0);
 }
+
+// ------------------
+// --- CREAR FORO ---
+// ------------------
 
 void crear_foro()
 {
+	printf("\n--- TODO: void crear_foro ---\n");
 }
 
-/* LOGIN / LOGOUT SQL */
+// --------------------
+// --- LISTAR HILOS ---
+// --------------------
+
+int menu_listar_hilos()
+{
+ 	int opcion = -1;
+	int id_hilo;
+	
+	while ((opcion < 0) || (opcion > 3)) {
+
+		printf("\n");
+		printf("1. Entrar en hilo\n");
+		printf("2. Crear hilo\n");
+		printf("3. Refrescar vista\n");
+		printf("0. Volver atrás\n");
+		printf("\n");
+		printf("Opción: ");
+		scanf("%d", &opcion);
+
+		switch (opcion) {
+			case 1:
+			 	printf ("Numero del hilo: ");
+				scanf("%d", &id_hilo);			 	
+				listar_entradas(id_hilo); 
+				break;
+			case 2: crear_hilo(); break;
+		}
+	}
+	return opcion;
+}
+
+void listar_hilos(int id_foro) 
+{
+	int id_foro_obtenida = -1;
+	char fechacreacion_foro[11];
+	char nombre_foro[45];
+		
+	int id_hilo;
+	char fechacreacion_hilo[11];
+	char titulo_hilo[45];
+	
+	EXEC SQL WHENEVER NOT FOUND DO do_nothing();
+	EXEC SQL SELECT id, fechacreacion, nombre
+		INTO :id_foro_obtenida, :fechacreacion_foro, :nombre_foro
+		FROM foro
+		WHERE id=:id_foro;
+	
+	if (id_foro_obtenida < 0) {
+		printf("\nNúmero de foro no válido.\n");
+		return;
+	}
+	
+	do
+	{
+		printf("\n");
+		printf(" Foro %5d | %45s | creado el %11s\n",
+				id_foro, nombre_foro, fechacreacion_foro);
+		printf(" ================================================================================");
+	
+		EXEC SQL DECLARE hilos CURSOR FOR
+			SELECT id, fechacreacion, titulo
+			FROM hilo
+			WHERE idforo=:id_foro;
+		EXEC SQL OPEN hilos;
+		EXEC SQL WHENEVER NOT FOUND DO break;
+	
+		printf("\n");
+		while(1){
+			EXEC SQL FETCH hilos INTO :id_hilo, :fechacreacion_hilo, :titulo_hilo;
+			printf(" Hilo %5d | %45s | creado el %11s\n",
+					id_hilo, titulo_hilo, fechacreacion_hilo);
+		}
+	}
+	while (menu_listar_hilos() > 0);
+}
+
+// ------------------
+// --- CREAR HILO ---
+// ------------------
+
+void crear_hilo()
+{
+	printf("\n--- TODO: void crear_hilo ---\n");
+}
+
+// -----------------------
+// --- LISTAR ENTRADAS ---
+// -----------------------
+
+void listar_entradas(int id_hilo)
+{
+	int id_hilo_obtenida = -1;
+	char fechacreacion_hilo[11];
+	char titulo_hilo[45];
+	
+	EXEC SQL WHENEVER NOT FOUND DO do_nothing();
+	EXEC SQL SELECT id, fechacreacion, titulo
+		INTO :id_hilo_obtenida, :fechacreacion_hilo, :titulo_hilo
+		FROM hilo
+		WHERE id=:id_hilo;
+	
+	if (id_hilo_obtenida < 0) {
+		printf("\nNúmero de hilo no válido.\n");
+		printf("Pulsa cualquier tecla para volver al foro.\n");
+		getchar();
+	}
+}
+
+// ------------------------
+// --- SQL LOGIN/LOGOUT ---
+// ------------------------
 
 void login_bd()
 {
@@ -195,12 +289,10 @@ void logout_bd()
 	EXEC SQL COMMIT RELEASE;
 }
 
-/* GESTION ERRORES SQL */
-
 void gestion_error_sql()
 {
 	EXEC SQL WHENEVER SQLERROR CONTINUE;
-	printf("Falló al autenticación  la base de datos.\n");
+	printf("Falló de autenticación a la base de datos.\n");
 	EXEC SQL ROLLBACK WORK RELEASE;
 	exit(1);
 }
