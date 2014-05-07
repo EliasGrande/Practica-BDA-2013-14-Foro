@@ -34,7 +34,7 @@ CREATE TABLE entrada (
 	titulo VARCHAR(45) NOT NULL,
 	texto VARCHAR(1000) NOT NULL,
 	fechaedicion DATE,
-	numedicion VARCHAR(45) NOT NULL,
+	numedicion VARCHAR(45) DEFAULT 0 NOT NULL,
 	idusuario NUMBER(10) NOT NULL CONSTRAINT FK_ENTRADA_U REFERENCES usuario,
 	idhilo NUMBER(10) NOT NULL CONSTRAINT FK_ENTRADA_H REFERENCES hilo
 );
@@ -134,6 +134,50 @@ VALUES (
 INSERT INTO hilo (id, fechacreacion, titulo, idusuario, idforo)
 VALUES (
 	hilo_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Hilo trabajo tutelado', 1, 5
-)
+);
+
+-- ------------------------
+
+INSERT INTO entrada (id, fechacreacion, titulo, texto, idusuario, idhilo) 
+VALUES (
+	entrada_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Duda puntuacion practica', 'Queria saber que cuanto cuenta la practica.', 1, 1
+);
+
+INSERT INTO entrada (id, fechacreacion, titulo, texto, idusuario, idhilo) 
+VALUES (
+	entrada_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Duda trigger', 'Como funcionan los triggers?', 1, 1
+);
+
+INSERT INTO entrada (id, fechacreacion, titulo, texto, idusuario, idhilo) 
+VALUES (
+	entrada_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Examen Bases de datos avanzadas', 'Queria saber en que fecha es el examen.', 1, 1
+);
+
+INSERT INTO entrada (id, fechacreacion, titulo, texto, idusuario, idhilo) 
+VALUES (
+	entrada_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Entrega practica', 'Queria saber que dia se entrega la practica.', 1, 1
+);
+
+INSERT INTO entrada (id, fechacreacion, titulo, texto, idusuario, idhilo) 
+VALUES (
+	entrada_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Duda puntuacion practica', 'La puntuacion de la practica como va a ser?.', 1, 1
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
