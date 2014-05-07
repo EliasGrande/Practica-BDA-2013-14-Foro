@@ -58,6 +58,5 @@ commit:
 	git commit -a
 
 push:
-	export GIT_SSL_NO_VERIFY=true
-	git push
+	export GIT_SSL_NO_VERIFY=true && git push
 
