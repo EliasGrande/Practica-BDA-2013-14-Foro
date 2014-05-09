@@ -10,7 +10,8 @@ CREATE TABLE usuario (
 	pass VARCHAR(32) NOT NULL,
 	email VARCHAR(45) NOT NULL,
 	fecharegistro VARCHAR(45) NOT NULL,
-	esAdmin CHAR(1) NOT NULL	
+	esadmin CHAR(1) DEFAULT 'N' NOT NULL,
+	UNIQUE (nick, email)
 );
 
 CREATE TABLE foro (

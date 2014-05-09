@@ -21,7 +21,7 @@ cd "$dir" || error
 "$compila" "$name"
 #exitcode=$?
 
-#rm -f "$name.o" "$name.c" "$name.lis"
+rm -f "$name.o" "$name.c" "$name.lis"
 #test $exitcode -eq 0 || error
 
 cd -

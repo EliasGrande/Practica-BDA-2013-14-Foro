@@ -38,12 +38,42 @@ int id_usuario;
 char esadmin_usuario;
 char nick_usuario [20];
 
+// ------------------
+// --- UTILIDADES ---
+// ------------------
+
+void leer_campo(char *texto, int longitud) {
+	int i = 0;
+	char letra;
+	scanf("%s2000[^\n]", texto);
+	while (1) {
+		letra = texto[i];
+		if (letra == '\0' || letra == '\n') {
+			texto[i] = '\0';
+			break;
+		}
+		i++;
+	}
+}
+
 void esperar_tecla()
 {
 	printf("Pulsa cualquier tecla para continuar.\n");
 	int fd;
 	void *buf;
 	read(fd, buf, 1);
+}
+
+void imprimir_error_sql()
+{
+	printf("Error (%d) %s", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+}
+
+void gestion_error(int *ha_fallado)
+{
+	ha_fallado[0] = 1;
+	imprimir_error_sql();
+	esperar_tecla();
 }
 
 // ------------
@@ -90,6 +120,13 @@ int menu_principal()
 // --- ENTRAR ---
 // --------------
 
+int error_al_entrar;
+void gestion_error_entrar() {
+	error_al_entrar = 1;
+	imprimir_error_sql();
+	esperar_tecla();
+}
+
 void entrar()
 {
 	char pass_usuario[32];
@@ -100,17 +137,21 @@ void entrar()
 	printf("Contraseña: ");
 	scanf("%s", pass_usuario);
 
+	error_al_entrar = 0;
 	id_usuario = -1;
+	EXEC SQL WHENEVER SQLERROR DO gestion_error_entrar();
 	EXEC SQL SELECT id, esadmin
 		INTO :id_usuario, :esadmin_usuario
 		FROM usuario
 		WHERE nick=:nick_usuario AND pass=:pass_usuario;
 
-	if (id_usuario < 0) {
-		printf("\nUsuario y/o contraseña no válidos.\n");
-	}
-	else {
-		listar_foros();
+	if (!error_al_entrar) {
+		if (id_usuario < 0) {
+			printf("\nUsuario y/o contraseña no válidos.\n");
+		}
+		else {
+			listar_foros();
+		}
 	}
 }
 
@@ -120,7 +161,49 @@ void entrar()
 
 void registro()
 {
-	printf("\n--- TODO: void registro ---\n");
+	char nick[20];
+	char pass[32];
+	char email[45];
+	int ha_fallado = 0;
+
+	int id_usuario_obtenido;
+	do {
+		printf("\n");
+		printf("Nombre de usuario: ");
+		leer_campo(nick, 20);
+	
+		id_usuario_obtenido = -1;
+		ha_fallado = 0;
+		EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
+		EXEC SQL SELECT id
+			INTO :id_usuario_obtenido
+			FROM usuario
+			WHERE nick=:nick;
+		if (ha_fallado) break;
+		
+		if (id_usuario_obtenido < 0) {
+			printf("Contraseña: ");
+			leer_campo(pass, 32);
+			printf("Email: ");
+			leer_campo(email, 45);
+	
+			ha_fallado = 0;
+			EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
+			EXEC SQL INSERT INTO usuario
+				(id, nick, pass, email, fecharegistro)
+				VALUES(usuario_seq.NEXTVAL, :nick, :pass, :email,
+					(SELECT sysdate FROM dual));
+			EXEC SQL COMMIT;
+			if (ha_fallado) break;
+	
+			printf("\nUsuario registrado con éxito.\n");
+			esperar_tecla();
+			break;
+		}
+		
+		printf("El nick introducido ya está en uso.");
+	}
+	while (1);
 }
 
 // --------------------
@@ -160,6 +243,7 @@ void listar_foros()
 	int id;
 	char fechacreacion[11];
 	char nombre[45];
+	int ha_fallado;
 	
 	do {
 		EXEC SQL DECLARE foros CURSOR FOR
@@ -169,8 +253,11 @@ void listar_foros()
 		EXEC SQL WHENEVER NOT FOUND DO break;
 	
 		printf("\n");
+		ha_fallado = 0;
+		EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
 		while(1) {
 			EXEC SQL FETCH foros INTO :id, :fechacreacion, :nombre;
+			if (ha_fallado) return;
 			printf(" Foro %5d | %45s | creado el %11s\n",
 					id, nombre, fechacreacion);
 		}
@@ -184,10 +271,13 @@ void listar_foros()
 
 void borrar_foro(int id_foro)
 {
+	int ha_fallado = 0;
+	EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
 	EXEC SQL WHENEVER NOT FOUND DO do_nothing();
 	EXEC SQL DELETE FROM foro
 		WHERE id=:id_foro;
 	EXEC SQL COMMIT;
+	if (ha_fallado) return;
 	
 	printf("\nForo borrado con éxito.\n");
 	esperar_tecla();
@@ -197,12 +287,6 @@ void borrar_foro(int id_foro)
 // --- CREAR/EDITAR FORO ---
 // -------------------------
 
-void gestion_error_crear_foro()
-{
-	printf("Error (%d) %s", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
-	exit(1);
-}
-
 void crear_foro()
 {
 	char nombre[45];
@@ -211,12 +295,14 @@ void crear_foro()
 	fgets(nombre, 45*sizeof(char), stdin);
 	fgets(nombre, 45*sizeof(char), stdin);
 	
-	EXEC SQL WHENEVER SQLERROR DO gestion_error_crear_foro();
+	int ha_fallado = 0;
+	EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
 	EXEC SQL INSERT INTO foro
 		(id, nombre, idusuario, fechacreacion)
 		VALUES(foro_seq.NEXTVAL, :nombre, :id_usuario,
 			(SELECT sysdate FROM dual));
 	EXEC SQL COMMIT;
+	if (ha_fallado) return;
 	
 	printf("\nForo creado con éxito.\n");
 	esperar_tecla();
@@ -230,11 +316,13 @@ void editar_foro(int id_foro)
 	fgets(nombre, 45*sizeof(char), stdin);
 	fgets(nombre, 45*sizeof(char), stdin);
 	
-	EXEC SQL WHENEVER SQLERROR DO gestion_error_crear_foro();
+	int ha_fallado = 0;
+	EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
 	EXEC SQL UPDATE foro
 		SET nombre = :nombre
 		WHERE id = :id_foro;
 	EXEC SQL COMMIT;
+	if (ha_fallado) return;
 	
 	printf("\nForo editado con éxito.\n");
 	esperar_tecla();
@@ -255,11 +343,14 @@ int menu_listar_hilos(int id_foro)
 		es_autor_o_admin = 1;
 	}
 	else {
+		int ha_fallado = 0;
+		EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
 		EXEC SQL WHENEVER NOT FOUND DO do_nothing();
 		EXEC SQL SELECT id
 			INTO :id_foro_obtenido
 			FROM foro
 			WHERE id=:id_foro AND idusuario=:id_usuario;
+		if (ha_fallado) return;
 		if (id_foro_obtenido>0) es_autor_o_admin = 1;
 	}
 	
@@ -309,13 +400,18 @@ void listar_hilos(int id_foro)
 	char fechacreacion_hilo[11];
 	char titulo_hilo[45];
 	
+	int ha_fallado = 0;
+	
 	do
 	{
+		ha_fallado = 0;
+		EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
 		EXEC SQL WHENEVER NOT FOUND DO do_nothing();
 		EXEC SQL SELECT id, fechacreacion, nombre
 			INTO :id_foro_obtenido, :fechacreacion_foro, :nombre_foro
 			FROM foro
 			WHERE id=:id_foro;
+		if (ha_fallado) return;
 	
 		if (id_foro_obtenido < 0) {
 			printf("\nNúmero de foro no válido.\n");
@@ -336,8 +432,11 @@ void listar_hilos(int id_foro)
 		EXEC SQL OPEN hilos;
 		EXEC SQL WHENEVER NOT FOUND DO break;
 	
+		ha_fallado = 0;
+		EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
 		while(1){
 			EXEC SQL FETCH hilos INTO :id_hilo, :fechacreacion_hilo, :titulo_hilo;
+			if (ha_fallado) return;
 			printf(" Hilo %5d | %45s | creado el %11s\n",
 					id_hilo, titulo_hilo, fechacreacion_hilo);
 		}
@@ -351,10 +450,13 @@ void listar_hilos(int id_foro)
 
 void borrar_hilo(int id_hilo)
 {
+	int ha_fallado = 0;
+	EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
 	EXEC SQL WHENEVER NOT FOUND DO do_nothing();
 	EXEC SQL DELETE FROM hilo
 		WHERE id=:id_hilo;
 	EXEC SQL COMMIT;
+	if (ha_fallado) return;
 	
 	printf("\nHilo borrado con éxito.\n");
 	esperar_tecla();
@@ -364,12 +466,6 @@ void borrar_hilo(int id_hilo)
 // --- CREAR/EDITAR HILO ---
 // -------------------------
 
-void gestion_error_crear_hilo()
-{
-	printf("Error (%d) %s", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
-	exit(1);
-}
-
 void crear_hilo(int id_foro)
 {
 	char titulo[45];
@@ -378,12 +474,14 @@ void crear_hilo(int id_foro)
 	fgets(titulo, 45*sizeof(char), stdin);
 	fgets(titulo, 45*sizeof(char), stdin);
 	
-	EXEC SQL WHENEVER SQLERROR DO gestion_error_crear_hilo();
+	int ha_fallado = 0;
+	EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
 	EXEC SQL INSERT INTO hilo
 		(id, titulo, idforo, idusuario, fechacreacion)
 		VALUES(hilo_seq.NEXTVAL, :titulo, :id_foro,
 		:id_usuario, (SELECT sysdate FROM dual));
 	EXEC SQL COMMIT;
+	if (ha_fallado) return;
 	
 	printf("\nHilo creado con éxito.\n");
 	esperar_tecla();
@@ -394,14 +492,15 @@ void editar_hilo(int id_hilo)
 	char titulo[45];
 	printf("\n");
 	printf("Titulo: ");
-	fgets(titulo, 45*sizeof(char), stdin);
-	fgets(titulo, 45*sizeof(char), stdin);
+	leer_campo(titulo, 45);
 	
-	EXEC SQL WHENEVER SQLERROR DO gestion_error_crear_hilo();
+	int ha_fallado = 0;
+	EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
 	EXEC SQL UPDATE hilo
 		SET titulo = :titulo
 		WHERE id = :id_hilo;
 	EXEC SQL COMMIT;
+	if (ha_fallado) return;
 	
 	printf("\nHilo editado con éxito.\n");
 	esperar_tecla();
@@ -422,11 +521,14 @@ int menu_listar_entradas(int id_hilo)
 		es_autor_o_admin = 1;
 	}
 	else {
+		int ha_fallado = 0;
+		EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
 		EXEC SQL WHENEVER NOT FOUND DO do_nothing();
 		EXEC SQL SELECT id
 			INTO :id_hilo_obtenido
 			FROM hilo
 			WHERE id=:id_hilo AND idusuario=:id_usuario;
+		if (ha_fallado) return;
 		if (id_hilo_obtenido>0) es_autor_o_admin = 1;
 	}
 	
@@ -480,8 +582,12 @@ void listar_entradas(int id_hilo)
 	char texto_entrada[1000];
 	char nick_usuario_entrada[20];
 	
+	int ha_fallado;
+	
 	do
 	{
+		ha_fallado = 0;
+		EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
 		EXEC SQL WHENEVER NOT FOUND DO do_nothing();
 		EXEC SQL SELECT hilo.id, hilo.fechacreacion, hilo.titulo, usuario.nick
 			INTO :id_hilo_obtenido, :fechacreacion_hilo, :titulo_hilo, 
@@ -489,6 +595,7 @@ void listar_entradas(int id_hilo)
 			FROM hilo JOIN usuario
 			ON hilo.idusuario = usuario.id
 			WHERE hilo.id = :id_hilo;
+		if (ha_fallado) return;
 	
 		if (id_hilo_obtenido < 0) {
 			printf("\nNúmero de hilo no válido.\n");
@@ -509,10 +616,13 @@ void listar_entradas(int id_hilo)
 		EXEC SQL OPEN entradas;
 		EXEC SQL WHENEVER NOT FOUND DO break;
 	
+		ha_fallado = 0;
+		EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
 		while(1){
 			EXEC SQL FETCH entradas
 			INTO :id_entrada, :fechacreacion_entrada,
 			     :titulo_entrada, :texto_entrada;
+			if (ha_fallado) return;
 			printf(" ----------------------------------------");
 			printf("----------------------------------------\n");
 			printf(" Post %5d | %45s | creado el %11s\n",
@@ -540,12 +650,15 @@ int menu_ver_entrada(int id_entrada)
 		es_autor_o_admin = 1;
 	}
 	else {
+		int ha_fallado = 0;
+		EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
 		EXEC SQL WHENEVER NOT FOUND DO do_nothing();
 		EXEC SQL SELECT id
 			INTO :id_entrada_obtenido
 			FROM entrada
 			WHERE id=:id_entrada AND idusuario=:id_usuario;
 		if (id_entrada_obtenido>0) es_autor_o_admin = 1;
+		if (ha_fallado) return;
 	}
 	
 	int num_opciones = (es_autor_o_admin) ? 3 : 1;
@@ -584,12 +697,15 @@ void ver_entrada(int id_entrada)
 	char titulo_entrada[45];
 	char texto_entrada[1000];
 	
+	int ha_fallado = 0;
+	EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
 	EXEC SQL WHENEVER NOT FOUND DO do_nothing();
 	EXEC SQL SELECT id, fechacreacion, titulo, texto
 		INTO :id_entrada_obtenido, :fechacreacion_entrada, :titulo_entrada,
 		     :texto_entrada
 		FROM entrada
 		WHERE id=:id_entrada;
+	if (ha_fallado) return;
 	
 	if (id_entrada_obtenido < 0) {
 		printf("\nNúmero de entrada no válido.\n");
@@ -614,9 +730,13 @@ void ver_entrada(int id_entrada)
 
 void borrar_entrada(int id_entrada)
 {
+	int ha_fallado = 0;
+	EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
 	EXEC SQL WHENEVER NOT FOUND DO do_nothing();
 	EXEC SQL DELETE FROM entrada
 		WHERE id=:id_entrada;
+	EXEC SQL COMMIT;
+	if (ha_fallado) return;
 	
 	printf("\nEntrada borrada con éxito.\n");
 	esperar_tecla();
@@ -642,19 +762,18 @@ void editar_entrada(int id_entrada)
 	char texto[1000];
 	pedir_datos_entrada(titulo, texto);
 	
+	int ha_fallado = 0;
+	EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
 	EXEC SQL WHENEVER NOT FOUND DO do_nothing();
 	EXEC SQL UPDATE entrada
-		SET titulo = :titulo, texto = :texto
+		SET titulo = :titulo, texto = :texto, numedicion = numedicion + 1,
+			fechaedicion = (SELECT sysdate FROM dual)
 		WHERE id=:id_entrada;
+	EXEC SQL COMMIT;
+	if (ha_fallado) return;
 	
 	printf("\nEntrada editada con éxito.\n");
 	esperar_tecla();
-}
-
-void gestion_error_crear_entrada()
-{
-	printf("Error (%d) %s", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
-	exit(1);
 }
 
 void crear_entrada(int id_hilo)
@@ -663,12 +782,14 @@ void crear_entrada(int id_hilo)
 	char texto[1000];
 	pedir_datos_entrada(titulo, texto);
 	
-	EXEC SQL WHENEVER SQLERROR DO gestion_error_crear_entrada();
+	int ha_fallado = 0;
+	EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
 	EXEC SQL INSERT INTO entrada
 		(id, titulo, texto, idhilo, idusuario, fechacreacion)
 		VALUES(entrada_seq.NEXTVAL, :titulo, :texto, :id_hilo,
 		:id_usuario, (SELECT sysdate FROM dual));
 	EXEC SQL COMMIT;
+	if (ha_fallado) return;
 	
 	printf("\nEntrada creada con éxito.\n");
 	esperar_tecla();
