@@ -454,19 +454,26 @@ void borrar_entrada(int id_entrada)
 // --- CREAR/EDITAR ENTRADA ---
 // ----------------------------
 
+void leer_con_espacios(char *texto)
+{
+	while(scanf("%2048[^\n]", texto) == 1){
+		while(getchar() != '\n');
+	}
+}
+
 void pedir_datos_entrada(char *titulo, char *texto)
 {
 	printf("\n");
 	printf("Titulo: ");
-	scanf("%s",titulo);
+	fgets(titulo, 45*sizeof(char), stdin);
 	printf("Texto: ");
-	scanf("%s",texto);
+	fgets(texto, 1000*sizeof(char), stdin);
 }
 
 void editar_entrada(int id_entrada)
 {
-	char titulo[45];
-	char texto[1000];
+	char *titulo = malloc(45*sizeof(char));
+	char *texto = malloc(1000*sizeof(char));
 	pedir_datos_entrada(titulo, texto);
 	
 	printf("====> %s\n====> %s\n", titulo, texto);
