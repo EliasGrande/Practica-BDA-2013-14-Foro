@@ -26,6 +26,7 @@ void crear_hilo(int id_foro);
 void editar_hilo(int id_hilo);
 
 void listar_entradas(int id_hilo);
+void pedir_datos_entrada(char * titulo,char * texto);
 void crear_entrada(int id_hilo);
 
 void ver_entrada(int id_entrada);
@@ -71,8 +72,10 @@ void imprimir_error_sql()
 
 void gestion_error(int *ha_fallado)
 {
+	EXEC SQL WHENEVER SQLERROR CONTINUE;
 	ha_fallado[0] = 1;
 	imprimir_error_sql();
+	EXEC SQL ROLLBACK;
 	esperar_tecla();
 }
 
@@ -292,8 +295,7 @@ void crear_foro()
 	char nombre[45];
 	printf("\n");
 	printf("Nombre: ");
-	fgets(nombre, 45*sizeof(char), stdin);
-	fgets(nombre, 45*sizeof(char), stdin);
+	leer_campo(nombre, 45);
 	
 	int ha_fallado = 0;
 	EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
@@ -313,8 +315,6 @@ void editar_foro(int id_foro)
 	char nombre[45];
 	printf("\n");
 	printf("Nombre: ");
-	fgets(nombre, 45*sizeof(char), stdin);
-	fgets(nombre, 45*sizeof(char), stdin);
 	
 	int ha_fallado = 0;
 	EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
@@ -469,22 +469,35 @@ void borrar_hilo(int id_hilo)
 void crear_hilo(int id_foro)
 {
 	char titulo[45];
+	int id_hilo;
+	int ha_fallado;
+	
 	printf("\n");
 	printf("Titulo: ");
-	fgets(titulo, 45*sizeof(char), stdin);
-	fgets(titulo, 45*sizeof(char), stdin);
+	leer_campo(titulo, 45);
 	
-	int ha_fallado = 0;
+	ha_fallado = 0;
+	EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
+	EXEC SQL SELECT hilo_seq.NEXTVAL
+		INTO :id_hilo
+		FROM dual;
+	if (ha_fallado) return;
+		
+	ha_fallado = 0;
 	EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
 	EXEC SQL INSERT INTO hilo
 		(id, titulo, idforo, idusuario, fechacreacion)
-		VALUES(hilo_seq.NEXTVAL, :titulo, :id_foro,
+		VALUES(:id_hilo, :titulo, :id_foro,
 		:id_usuario, (SELECT sysdate FROM dual));
-	EXEC SQL COMMIT;
+	//EXEC SQL COMMIT; No se hace commit aqui porque se hace tras crear la entrada inicial del hilo
 	if (ha_fallado) return;
 	
-	printf("\nHilo creado con éxito.\n");
-	esperar_tecla();
+	printf("\nDatos de la primera entrada:\n");
+	if(crear_entrada(id_hilo))
+	{
+		printf("\nHilo creado con éxito.\n");
+		esperar_tecla();
+	}
 }
 
 void editar_hilo(int id_hilo)
@@ -750,10 +763,9 @@ void pedir_datos_entrada(char *titulo, char *texto)
 {
 	printf("\n");
 	printf("Titulo: ");
-	fgets(titulo, 45*sizeof(char), stdin);
-	fgets(titulo, 45*sizeof(char), stdin);
+	leer_campo(titulo, 45);
 	printf("Texto: ");
-	fgets(texto, 1000*sizeof(char), stdin);
+	leer_campo(texto, 1000);
 }
 
 void editar_entrada(int id_entrada)
@@ -785,7 +797,7 @@ void crear_entrada(int id_hilo)
 	int ha_fallado = 0;
 	EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
 	EXEC SQL INSERT INTO entrada
-		(id, titulo, texto, idhilo, idusuario, fechacreacion)
+		(id, titulo, texto, idhilo, idusuarioooo, fechacreacion)
 		VALUES(entrada_seq.NEXTVAL, :titulo, :texto, :id_hilo,
 		:id_usuario, (SELECT sysdate FROM dual));
 	EXEC SQL COMMIT;
