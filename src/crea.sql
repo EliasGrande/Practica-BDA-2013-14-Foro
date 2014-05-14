@@ -10,7 +10,7 @@ CREATE TABLE usuario (
 	pass VARCHAR(32) NOT NULL,
 	email VARCHAR(45) NOT NULL,
 	fecharegistro VARCHAR(45) NOT NULL,
-	esadmin CHAR(1) DEFAULT 'N' NOT NULL,
+	esadmin CHAR(1) DEFAULT 'N' NOT NULL CHECK (esadmin IN ('S', 'N')),
 	UNIQUE (nick, email)
 );
 
