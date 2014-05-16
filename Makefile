@@ -28,7 +28,7 @@ PDF_VIEWER = evince
 
 .PHONY: all clean exec sql doc commit push pull
 
-all: $(buildforo)
+all: clean sql exec
 
 $(builddir):
 	mkdir -p $(builddir)

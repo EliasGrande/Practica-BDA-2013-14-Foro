@@ -27,7 +27,7 @@ void editar_hilo(int id_hilo);
 
 void listar_entradas(int id_hilo);
 void pedir_datos_entrada(char * titulo,char * texto);
-void crear_entrada(int id_hilo);
+int crear_entrada(int id_hilo);
 
 void ver_entrada(int id_entrada);
 void borrar_entrada(int id_entrada);
@@ -788,7 +788,7 @@ void editar_entrada(int id_entrada)
 	esperar_tecla();
 }
 
-void crear_entrada(int id_hilo)
+int crear_entrada(int id_hilo)
 {
 	char titulo[45];
 	char texto[1000];
@@ -797,14 +797,16 @@ void crear_entrada(int id_hilo)
 	int ha_fallado = 0;
 	EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
 	EXEC SQL INSERT INTO entrada
-		(id, titulo, texto, idhilo, idusuarioooo, fechacreacion)
+		(id, titulo, texto, idhilo, idusuario, fechacreacion)
 		VALUES(entrada_seq.NEXTVAL, :titulo, :texto, :id_hilo,
 		:id_usuario, (SELECT sysdate FROM dual));
 	EXEC SQL COMMIT;
-	if (ha_fallado) return;
+	if (ha_fallado) return !ha_fallado;
 	
 	printf("\nEntrada creada con éxito.\n");
 	esperar_tecla();
+	
+	return !ha_fallado;
 }
 
 // ------------------------
