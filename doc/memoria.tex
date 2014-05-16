@@ -124,10 +124,9 @@ Curso 2013-2014
 \rule{80mm}{0.1mm}\\
 \vspace*{0.25in}
 
-\begin{large}
-\textbf{Alejandro Fortes Lopes}\\
-\textbf{Elías Grande Cásedas}\\
-\end{large}
+
+\textbf{Alejandro Fortes Lopes - \texttt{alejandro.fortes.lopes@udc.es} - \texttt{47384252C}}\\
+\textbf{Elías Grande Cásedas - \texttt{elias.grande@udc.es} - \texttt{45845518D}}\\
 
 \end{center}
 
@@ -235,6 +234,29 @@ La aplicación se conectará directamente a la base de datos y le permitirá al 
 \includegraphics[width=15cm]{./img/relacional.png}
 
 En modelo relacional se corresponde a la perfección (salvo algún detalle de nombrado) con lo ya descrito en el diccionario de datos del modelo conceptual.
+
+\section{Compilación e instalación}
+Hemos incluido un fichero \texttt{Makefile} para facilitar la ejecución de diferentes acciones. Las acciones son:
+\begin{itemize}
+	\item \texttt{exec}: compila y ejecuta la aplicación.
+	\item \texttt{sql}: ejecuta el \textit{script} sql de creación de tablas. Puede pasarsele el parámetro \texttt{ORA\_LOGIN} para que no pregunte el nombre y contraseña, por ejemplo:
+	\begin{center}
+	\lstinline[language={}]{$ make sql ORA_LOGIN=\\\"nombre.usuario\\\"/contraseña}
+	\end{center}
+	\item \texttt{doc}: compila y abre la memoria.
+	\item \texttt{clean}: elimina compilados y los típicos archivos temporales del sistema operativo.
+\end{itemize}
+Las acciones mencionadas anteriormente han de realizarse sobre la raíz del proyecto.
+\paragraph{}
+Si se usa el fichero \texttt{Makefile} sin indicar ningún \textit{target} la acción realizada será:
+	\begin{center}
+	\lstinline[language={}]{$ make clean sql exec}
+	\end{center}
+La aplicación usa la base de datos del alumno Elías Grande. El login y la contraseña pueden consultarse en el código (línea 819 del archivo \texttt{foro.pc}).
+
+
+
+
 
 
 \end{document}
