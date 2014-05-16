@@ -18,10 +18,10 @@ dir=`dirname "$input"`
 name=`basename "$input" | sed -e "s/\.pc$//"`
 
 cd "$dir" || error
+rm -f "$name.o" "$name.c" "$name.lis"
 "$compila" "$name"
 #exitcode=$?
 
-rm -f "$name.o" "$name.c" "$name.lis"
 #test $exitcode -eq 0 || error
 
 cd -

@@ -20,6 +20,7 @@ dir=`dirname "$input"`
 name=`basename "$input" | sed -e "s/\.tex$//"`
 
 cd "$dir" || error
+rm -f *.aux *.dvi *.log *.out *.toc *.synctex.gz
 echo "compilando «$input»..."
 $pdflatex "$name.tex" >/dev/null 2>/dev/null &
 pid=$!
