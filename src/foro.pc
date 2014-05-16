@@ -693,8 +693,7 @@ int menu_ver_entrada(int id_entrada)
 			switch (opcion) {
 				case 2:
 					borrar_entrada(id_entrada);
-					opcion = 0;
-					break;
+					return;
 				case 3:
 					editar_entrada(id_entrada); break;
 			}
@@ -710,23 +709,23 @@ void ver_entrada(int id_entrada)
 	char titulo_entrada[45];
 	char texto_entrada[1000];
 	
-	int ha_fallado = 0;
-	EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
-	EXEC SQL WHENEVER NOT FOUND DO do_nothing();
-	EXEC SQL SELECT id, fechacreacion, titulo, texto
-		INTO :id_entrada_obtenido, :fechacreacion_entrada, :titulo_entrada,
-		     :texto_entrada
-		FROM entrada
-		WHERE id=:id_entrada;
-	if (ha_fallado) return;
-	
-	if (id_entrada_obtenido < 0) {
-		printf("\nNúmero de entrada no válido.\n");
-		esperar_tecla();
-		return;
-	}
-	
 	do {
+		int ha_fallado = 0;
+		EXEC SQL WHENEVER SQLERROR DO gestion_error(&ha_fallado);
+		EXEC SQL WHENEVER NOT FOUND DO do_nothing();
+		EXEC SQL SELECT id, fechacreacion, titulo, texto
+			INTO :id_entrada_obtenido, :fechacreacion_entrada, :titulo_entrada,
+				 :texto_entrada
+			FROM entrada
+			WHERE id=:id_entrada;
+		if (ha_fallado) return;
+	
+		if (id_entrada_obtenido < 0) {
+			printf("\nNúmero de entrada no válido.\n");
+			esperar_tecla();
+			return;
+		}
+	
 		printf("\n");
 		printf(" Post %5d | %45s | creado el %11s\n",
 				id_entrada, titulo_entrada, fechacreacion_entrada);
