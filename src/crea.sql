@@ -35,7 +35,7 @@ CREATE TABLE entrada (
 	titulo VARCHAR(45) NOT NULL,
 	texto VARCHAR(1000) NOT NULL,
 	fechaedicion DATE,
-	numedicion VARCHAR(45) DEFAULT 0 NOT NULL,
+	numedicion INT DEFAULT 0 NOT NULL,
 	idusuario NUMBER(10) NOT NULL CONSTRAINT FK_ENTRADA_U REFERENCES usuario ON DELETE SET NULL,
 	idhilo NUMBER(10) NOT NULL CONSTRAINT FK_ENTRADA_H REFERENCES hilo ON DELETE CASCADE
 );
@@ -163,22 +163,3 @@ INSERT INTO entrada (id, fechacreacion, titulo, texto, idusuario, idhilo)
 VALUES (
 	entrada_seq.NEXTVAL, (SELECT sysdate FROM dual), 'Duda puntuacion practica', 'La puntuacion de la practica como va a ser?.', 1, 1
 );
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
